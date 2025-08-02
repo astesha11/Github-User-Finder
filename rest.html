@@ -1,0 +1,172 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>GitHub User Finder</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", sans-serif;
+      background: linear-gradient(135deg, #e0eafc, #cfdef3);
+      color: #333;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 2.5em;
+      margin-bottom: 10px;
+    }
+
+    .search-box {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    input[type="text"] {
+      padding: 12px 20px;
+      width: 60%;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      transition: box-shadow 0.3s ease-in-out;
+    }
+
+    input[type="text"]:focus {
+      outline: none;
+      box-shadow: 0 0 10px #007bff;
+    }
+
+    .status {
+      text-align: center;
+      font-size: 18px;
+      margin-top: 10px;
+    }
+
+    #results {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .card {
+      background-color: #ffffff;
+      border-radius: 12px;
+      padding: 20px;
+      width: 220px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      text-align: center;
+      transition: transform 0.3s ease;
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .card img {
+      border-radius: 50%;
+      width: 80px;
+      height: 80px;
+      object-fit: cover;
+      margin-bottom: 10px;
+    }
+
+    .card h3 {
+      margin: 10px 0 5px;
+    }
+
+    .card a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+
+    .loading {
+      color: #444;
+    }
+
+    .error {
+      color: red;
+    }
+
+    @media screen and (max-width: 600px) {
+      input[type="text"] {
+        width: 90%;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <h1>🔍 GitHub User Finder</h1>
+
+  <div class="search-box">
+    <input type="text" id="searchInput" placeholder="Type GitHub username..." />
+    <div class="status" id="status"></div>
+  </div>
+
+  <div id="results"></div>
+
+  <script>
+    const searchInput = document.getElementById("searchInput");
+    const results = document.getElementById("results");
+    const status = document.getElementById("status");
+    let timer;
+
+    searchInput.addEventListener("input", () => {
+      clearTimeout(timer);
+      const query = searchInput.value.trim();
+
+      if (!query) {
+        results.innerHTML = "";
+        status.textContent = "";
+        return;
+      }
+
+      timer = setTimeout(() => {
+        fetchUsers(query);
+      }, 500); // debounce: 500ms
+    });
+
+    async function fetchUsers(query) {
+      status.innerHTML = `<span class="loading">Loading...</span>`;
+      results.innerHTML = "";
+
+      try {
+        const res = await fetch(`https://api.github.com/search/users?q=${query}`);
+        const data = await res.json();
+
+        if (data.total_count === 0) {
+          status.innerHTML = `<span class="error">No users found.</span>`;
+          return;
+        }
+
+        status.innerHTML = "";
+        data.items.slice(0, 10).forEach(user => {
+          const card = document.createElement("div");
+          card.classList.add("card");
+          card.innerHTML = `
+            <img src="${user.avatar_url}" alt="${user.login}" />
+            <h3>${user.login}</h3>
+            <a href="${user.html_url}" target="_blank">View Profile</a>
+          `;
+          results.appendChild(card);
+        });
+      } catch (error) {
+        status.innerHTML = `<span class="error">Error fetching data.</span>`;
+        console.error(error);
+      }
+    }
+  </script>
+
+</body>
+</html>
